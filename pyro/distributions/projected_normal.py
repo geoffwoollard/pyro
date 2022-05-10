@@ -204,6 +204,6 @@ def _log_prob_4(concentration, value):
 
     exp_para_part =  pos_piece + even_piece
     para_part = _safe_log(exp_para_part)
-    log_prob = perp_part + para_part + tensor(0.5).log()
+    log_prob = perp_part + para_part + torch.tensor(0.5).log()
 
     return log_prob
