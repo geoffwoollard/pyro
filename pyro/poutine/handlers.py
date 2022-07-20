@@ -72,7 +72,7 @@ from .replay_messenger import ReplayMessenger
 from .runtime import NonlocalExit
 from .scale_messenger import ScaleMessenger
 from .seed_messenger import SeedMessenger
-from .trace_messenger import TraceMessenger
+from .trace_messenger import TraceMessenger, TraceLoggerMessenger
 from .uncondition_messenger import UnconditionMessenger
 
 ############################################
@@ -96,6 +96,7 @@ _msngrs = [
     ScaleMessenger,
     SeedMessenger,
     TraceMessenger,
+    TraceLoggerMessenger,
     UnconditionMessenger,
 ]
 
