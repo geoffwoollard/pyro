@@ -37,6 +37,67 @@ def identify_dense_edges(trace):
                         trace.add_edge(past_name, name)
 
 
+class TraceHandler:
+    """
+    Execution trace poutine.
+
+    A TraceHandler records the input and output to every Pyro primitive
+    and stores them as a site in a Trace().
+    This should, in theory, be sufficient information for every inference algorithm
+    (along with the implicit computational graph in the Variables?)
+
+    We can also use this for visualization.
+    """
+
+    def __init__(self, msngr, fn):
+        self.fn = fn
+        self.msngr = msngr
+
+    def __call__(self, *args, **kwargs):
+        """
+        Runs the stochastic function stored in this poutine,
+        with additional side effects.
+
+        Resets self.trace to an empty trace,
+        installs itself on the global execution stack,
+        runs self.fn with the given arguments,
+        uninstalls itself from the global execution stack,
+        stores the arguments and return value of the function in special sites,
+        and returns self.fn's return value
+        """
+        with self.msngr:
+            self.msngr.trace.add_node(
+                "_INPUT", name="_INPUT", type="args", args=args, kwargs=kwargs
+            )
+            try:
+                ret = self.fn(*args, **kwargs)
+            except (ValueError, RuntimeError) as e:
+                exc_type, exc_value, traceback = sys.exc_info()
+                shapes = self.msngr.trace.format_shapes()
+                exc = exc_type("{}\n{}".format(exc_value, shapes))
+                exc = exc.with_traceback(traceback)
+                raise exc from e
+            self.msngr.trace.add_node(
+                "_RETURN", name="_RETURN", type="return", value=ret
+            )
+        return ret
+
+    @property
+    def trace(self):
+        return self.msngr.trace
+
+    def get_trace(self, *args, **kwargs):
+        """
+        :returns: data structure
+        :rtype: pyro.poutine.Trace
+
+        Helper method for a very common use case.
+        Calls this poutine and returns its trace instead of the function's return value.
+        """
+        self(*args, **kwargs)
+        return self.msngr.get_trace()
+        
+
 class TraceMessenger(Messenger):
     """
     Return a handler that records the inputs and outputs of primitive calls
@@ -164,65 +225,7 @@ class TraceLoggerMessenger(TraceMessenger):
         return super().__exit__(*args, **kwargs)
 
 
-class TraceHandler:
-    """
-    Execution trace poutine.
 
-    A TraceHandler records the input and output to every Pyro primitive
-    and stores them as a site in a Trace().
-    This should, in theory, be sufficient information for every inference algorithm
-    (along with the implicit computational graph in the Variables?)
-
-    We can also use this for visualization.
-    """
-
-    def __init__(self, msngr, fn):
-        self.fn = fn
-        self.msngr = msngr
-
-    def __call__(self, *args, **kwargs):
-        """
-        Runs the stochastic function stored in this poutine,
-        with additional side effects.
-
-        Resets self.trace to an empty trace,
-        installs itself on the global execution stack,
-        runs self.fn with the given arguments,
-        uninstalls itself from the global execution stack,
-        stores the arguments and return value of the function in special sites,
-        and returns self.fn's return value
-        """
-        with self.msngr:
-            self.msngr.trace.add_node(
-                "_INPUT", name="_INPUT", type="args", args=args, kwargs=kwargs
-            )
-            try:
-                ret = self.fn(*args, **kwargs)
-            except (ValueError, RuntimeError) as e:
-                exc_type, exc_value, traceback = sys.exc_info()
-                shapes = self.msngr.trace.format_shapes()
-                exc = exc_type("{}\n{}".format(exc_value, shapes))
-                exc = exc.with_traceback(traceback)
-                raise exc from e
-            self.msngr.trace.add_node(
-                "_RETURN", name="_RETURN", type="return", value=ret
-            )
-        return ret
-
-    @property
-    def trace(self):
-        return self.msngr.trace
-
-    def get_trace(self, *args, **kwargs):
-        """
-        :returns: data structure
-        :rtype: pyro.poutine.Trace
-
-        Helper method for a very common use case.
-        Calls this poutine and returns its trace instead of the function's return value.
-        """
-        self(*args, **kwargs)
-        return self.msngr.get_trace()
 
 
 class TraceLoggerHandler(TraceHandler):
