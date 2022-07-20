@@ -268,6 +268,14 @@ class ParamStoreDict:
                 constraint = constraints.real
             self._constraints[param_name] = constraint
 
+    def copy(self):
+        store = ParamStoreDict()
+        store.set_state({
+            "params": self._params.copy(), # TODO: double check deepcopy not needed
+            "constraints": self._constraints.copy(),
+        })
+        return store
+
     def save(self, filename):
         """
         Save parameters to file
