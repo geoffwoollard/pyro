@@ -63,7 +63,7 @@ class TraceMessenger(Messenger):
     :returns: stochastic function decorated with a :class:`~pyro.poutine.trace_messenger.TraceMessenger`
     """
 
-    def __init__(self, graph_type=None, param_only=None):
+    def __init__(self, graph_type=None, param_only=None, handler=TraceHandler):
         """
         :param string graph_type: string that specifies the type of graph
             to construct (currently only "flat" or "dense" supported)
@@ -78,6 +78,7 @@ class TraceMessenger(Messenger):
         self.graph_type = graph_type
         self.param_only = param_only
         self.trace = Trace(graph_type=self.graph_type)
+        self.handler = handler
 
     def __enter__(self):
         self.trace = Trace(graph_type=self.graph_type)
@@ -100,7 +101,7 @@ class TraceMessenger(Messenger):
         """
         TODO docs
         """
-        return TraceHandler(self, fn)
+        return self.handler(self, fn)
 
     def get_trace(self):
         """
@@ -136,6 +137,31 @@ class TraceMessenger(Messenger):
 
     def _pyro_post_param(self, msg):
         self.trace.add_node(msg["name"], **msg.copy())
+
+
+class TraceLoggerMessenger(TraceMessenger):
+    """
+    TODO: docs
+    """
+
+    def __init__(self, graph_type=None, param_only=None):
+        """
+        :param string graph_type: string that specifies the type of graph
+            to construct (currently only "flat" or "dense" supported)
+        :param param_only: boolean that specifies whether to record sample sites
+        """
+        super().__init__(graph_type=graph_type, param_only=param_only, handler=TraceLoggerHandler)
+        self.param_store = None
+
+    def __enter__(self):
+        self.param_store = _PYRO_PARAM_STORE.copy()
+        return super().__enter__()
+
+    def __exit__(self, *args, **kwargs):
+        for node in list(self.trace.nodes.values()):
+            if node["type"] == "param":
+                node["fn"] = self.param_store.get_param 
+        return super().__exit__(*args, **kwargs)
 
 
 class TraceHandler:
@@ -197,3 +223,11 @@ class TraceHandler:
         """
         self(*args, **kwargs)
         return self.msngr.get_trace()
+
+
+class TraceLoggerHandler(TraceHandler):
+    """
+    #_param = effectful(_PYRO_PARAM_STORE.get_param, type="param")
+
+    """
+    pass
