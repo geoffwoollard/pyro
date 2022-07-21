@@ -5,6 +5,7 @@ import re
 import warnings
 import weakref
 from contextlib import contextmanager
+from copy import deepcopy
 
 import torch
 from torch.distributions import constraints, transform_to
@@ -269,10 +270,13 @@ class ParamStoreDict:
             self._constraints[param_name] = constraint
 
     def copy(self):
+        """
+        Note: assums values of self._params are always tensors when uses .detach
+        """
         store = ParamStoreDict()
         store.set_state({
-            "params": self._params.copy(), # TODO: double check deepcopy not needed
-            "constraints": self._constraints.copy(),
+            "params": deepcopy({k: v.detach() for k,v in self._params.items()}),
+            "constraints": deepcopy(self._constraints),
         })
         return store
 
