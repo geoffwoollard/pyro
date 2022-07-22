@@ -19,6 +19,7 @@ from .handlers import (
     scale,
     seed,
     trace,
+    trace_logger,
     uncondition,
 )
 from .messenger import unwrap
@@ -48,6 +49,7 @@ __all__ = [
     "scale",
     "seed",
     "trace",
+    "trace_logger",
     "Trace",
     "uncondition",
     "unwrap",

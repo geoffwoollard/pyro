@@ -7,7 +7,6 @@ from .messenger import Messenger
 from .trace_struct import Trace
 from .util import site_is_subsample
 
-
 def identify_dense_edges(trace):
     """
     Modifies a trace in-place by adding all edges based on the
@@ -124,7 +123,7 @@ class TraceMessenger(Messenger):
     :returns: stochastic function decorated with a :class:`~pyro.poutine.trace_messenger.TraceMessenger`
     """
 
-    def __init__(self, graph_type=None, param_only=None, handler=TraceHandler):
+    def __init__(self, graph_type=None, param_only=None, handler=None):
         """
         :param string graph_type: string that specifies the type of graph
             to construct (currently only "flat" or "dense" supported)
@@ -139,7 +138,7 @@ class TraceMessenger(Messenger):
         self.graph_type = graph_type
         self.param_only = param_only
         self.trace = Trace(graph_type=self.graph_type)
-        self.handler = handler
+        self.handler = TraceHandler if handler is None else handler
 
     def __enter__(self):
         self.trace = Trace(graph_type=self.graph_type)
@@ -215,6 +214,7 @@ class TraceLoggerMessenger(TraceMessenger):
         self.param_store = None
 
     def __enter__(self):
+        from .runtime import _PYRO_PARAM_STORE
         self.param_store = _PYRO_PARAM_STORE.copy()
         return super().__enter__()
 
@@ -229,8 +229,4 @@ class TraceLoggerMessenger(TraceMessenger):
 
 
 class TraceLoggerHandler(TraceHandler):
-    """
-    #_param = effectful(_PYRO_PARAM_STORE.get_param, type="param")
-
-    """
     pass
