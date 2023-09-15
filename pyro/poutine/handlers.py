@@ -72,7 +72,7 @@ from .replay_messenger import ReplayMessenger
 from .runtime import NonlocalExit
 from .scale_messenger import ScaleMessenger
 from .seed_messenger import SeedMessenger
-from .trace_messenger import TraceMessenger
+from .trace_messenger import TraceMessenger, TraceLoggerMessenger
 from .uncondition_messenger import UnconditionMessenger
 
 ############################################
@@ -96,14 +96,14 @@ _msngrs = [
     ScaleMessenger,
     SeedMessenger,
     TraceMessenger,
+    TraceLoggerMessenger,
     UnconditionMessenger,
 ]
 
+_re1 = re.compile("(.)([A-Z][a-z]+)")
+_re2 = re.compile("([a-z0-9])([A-Z])")
 
 def _make_handler(msngr_cls):
-    _re1 = re.compile("(.)([A-Z][a-z]+)")
-    _re2 = re.compile("([a-z0-9])([A-Z])")
-
     def handler(fn=None, *args, **kwargs):
         if fn is not None and not (
             callable(fn) or isinstance(fn, collections.abc.Iterable)
@@ -125,8 +125,8 @@ def _make_handler(msngr_cls):
         r"\1_\2", _re1.sub(r"\1_\2", msngr_cls.__name__.split("Messenger")[0])
     ).lower()
     handler.__doc__ = (
-        """Convenient wrapper of :class:`~pyro.poutine.{}.{}` \n\n""".format(
-            handler_name + "_messenger", msngr_cls.__name__
+        """Convenient wrapper of :class:`~{}.{}` \n\n""".format(
+            msngr_cls.__module__, msngr_cls.__name__
         )
         + (msngr_cls.__doc__ if msngr_cls.__doc__ else "")
     )

@@ -5,6 +5,7 @@ import re
 import warnings
 import weakref
 from contextlib import contextmanager
+from copy import deepcopy
 
 import torch
 from torch.distributions import constraints, transform_to
@@ -267,6 +268,17 @@ class ParamStoreDict:
                 # Work around lack of hash & equality comparison on constraints.
                 constraint = constraints.real
             self._constraints[param_name] = constraint
+
+    def copy(self):
+        """
+        Note: assums values of self._params are always tensors when uses .detach
+        """
+        store = ParamStoreDict()
+        store.set_state({
+            "params": deepcopy({k: v.detach() for k,v in self._params.items()}),
+            "constraints": deepcopy(self._constraints),
+        })
+        return store
 
     def save(self, filename):
         """
