@@ -46,7 +46,6 @@ def _get_baseline_options(site):
 
 
 def _construct_baseline(node, guide_site, downstream_cost):
-
     # XXX should the average baseline be in the param store as below?
 
     baseline = 0.0
@@ -177,7 +176,6 @@ def _compute_downstream_costs(model_trace, guide_trace, non_reparam_nodes):  #
 
 
 def _compute_elbo(model_trace, guide_trace):
-
     # In ref [1], section 3.2, the part of the surrogate loss computed here is
     # \sum{cost}, which in this case is the ELBO. Instead of using the ELBO,
     # this implementation uses a surrogate ELBO which modifies some entropy
@@ -362,12 +360,10 @@ class TraceGraph_ELBO(ELBO):
         return loss
 
     def _loss_and_surrogate_loss(self, model, guide, args, kwargs):
-
         loss = 0.0
         surrogate_loss = 0.0
 
         for model_trace, guide_trace in self._get_traces(model, guide, args, kwargs):
-
             lp, slp = self._loss_and_surrogate_loss_particle(model_trace, guide_trace)
             loss += lp
             surrogate_loss += slp
@@ -378,7 +374,6 @@ class TraceGraph_ELBO(ELBO):
         return loss, surrogate_loss
 
     def _loss_and_surrogate_loss_particle(self, model_trace, guide_trace):
-
         elbo, surrogate_loss = _compute_elbo(model_trace, guide_trace)
 
         return elbo, surrogate_loss
@@ -417,12 +412,12 @@ class JitTraceGraph_ELBO(TraceGraph_ELBO):
 
             self._jit_loss_and_surrogate_loss = jit_loss_and_surrogate_loss
 
-        loss, surrogate_loss = self._jit_loss_and_surrogate_loss(*args, **kwargs)
+        elbo, surrogate_loss = self._jit_loss_and_surrogate_loss(*args, **kwargs)
 
         surrogate_loss.backward(
             retain_graph=self.retain_graph
         )  # triggers jit compilation
 
-        loss = loss.item()
+        loss = -elbo.item()
         warn_if_nan(loss, "loss")
         return loss

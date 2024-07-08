@@ -193,5 +193,17 @@ def _log_prob_4(concentration, value):
         (2 + t2) * t2.mul(-0.5).exp() / (2 * math.pi) ** 0.5
         + t * (3 + t2) * (t * -(0.5**0.5)).erfc() / 2
     )
+    t2_piece = (2 + t2) # even in t
+    exp_piece = t2.mul(-0.5).exp() # underflows, even in t
+    norm = (2 * math.pi) ** 0.5 # const
+    pos_piece = 2*t2_piece*exp_piece / norm
 
-    return para_part + perp_part
+    t3_piece = t * (3 + t2) # odd in t
+    only_erf_piece = (t * 0.5**0.5).erf() / 2 # odd in t
+    even_piece = 2*t3_piece*only_erf_piece
+
+    exp_para_part =  pos_piece + even_piece
+    para_part = _safe_log(exp_para_part)
+    log_prob = perp_part + para_part + torch.tensor(0.5).log()
+
+    return log_prob

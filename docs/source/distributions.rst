@@ -190,6 +190,13 @@ GaussianScaleMixture
     :undoc-members:
     :show-inheritance:
 
+GroupedNormalNormal
+-------------------
+.. autoclass:: pyro.distributions.GroupedNormalNormal
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 ImproperUniform
 ---------------
 .. autoclass:: pyro.distributions.improper_uniform.ImproperUniform
@@ -455,13 +462,6 @@ ConditionalTransform
 CholeskyTransform
 -----------------
 .. autoclass:: pyro.distributions.transforms.CholeskyTransform
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-CorrLCholeskyTransform
-----------------------
-.. autoclass:: pyro.distributions.transforms.CorrLCholeskyTransform
     :members:
     :undoc-members:
     :show-inheritance:

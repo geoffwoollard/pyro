@@ -93,8 +93,10 @@ List of Tutorials
    tensor_shapes
    modules
    workflow
+   prior_predictive
    jit
    svi_horovod
+   svi_lightning
 
 .. toctree::
    :maxdepth: 1
